@@ -1,0 +1,67 @@
+services:
+  test-front:
+    image: node:23-bookworm-slim
+    command: sh -c "npm install && npm i && npm run dev"
+    volumes:
+      - ./test-front:/usr/src/app
+    working_dir: /usr/src/app
+    env_file:
+      - .env
+    ports:
+      - 5173:5173
+    networks:
+      - test-network
+  
+  test-back:
+    build:
+      context: ./test-back
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./test-back:/app
+    working_dir: /app
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    depends_on:
+      - test-mysql
+    restart: unless-stopped
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "test-mysql"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  test-mysql:
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    volumes:
+      - test-mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - test-network
+
+  test-adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    networks:
+      - test-network
+
+volumes:
+  test-mysql-data:
+
+networks:
+  test-network:
+    driver: bridge
