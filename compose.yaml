@@ -1,15 +1,14 @@
 services:
   test-front:
-    build:
-      context: ./test-front
-      dockerfile: Dockerfile
+    image: node:23-bookworm-slim
+    command: sh -c "npm install && npm i && npm run dev"
     volumes:
-      - ./test-front:/app
-    working_dir: /app
+      - ./test-front:/usr/src/app
+    working_dir: /usr/src/app
     env_file:
       - .env
     ports:
-      - "5173:5173"
+      - 5173:5173
     networks:
       - test-network
   
@@ -18,7 +17,7 @@ services:
       context: ./test-back
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - 3000:3000
     volumes:
       - ./test-back:/app
     working_dir: /app
@@ -40,7 +39,7 @@ services:
   test-mysql:
     image: mysql:5.7
     ports:
-      - "3306:3306"
+      - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=test
@@ -55,7 +54,7 @@ services:
   test-adminer:
     image: adminer
     ports:
-      - "8080:8080"
+      - 8080:8080
     restart: unless-stopped
     networks:
       - test-network
