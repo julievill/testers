@@ -1,0 +1,114 @@
+<template>
+    <div>
+        <h1>CRUD {{tableName}}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in items" :key="item.id">
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.nombre }}</td>
+                    <td>
+                        <button @click="editItem(item)">Editar</button>
+                        <button @click="deleteItem(item.id)">Eliminar</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Agregar Nuevo {{tableName}}</h2>
+        <form @submit.prevent="createItem">
+            <input type="text" v-model="newItem.nombre" placeholder="Nombre" />
+            <button type="submit">Crear</button>
+        </form>
+    </div>
+</template>
+
+<script>
+    export default {
+        data() {
+            return {
+                items: [],
+                newItem: {},
+                editItemData: {},
+            };
+        },
+        mounted() {
+            this.fetchData();
+        },
+        methods: {
+            async fetchData() {
+                try {
+                    const response = await fetch(`http://localhost:3000/{{tableName}}`);
+                    this.items = await response.json();
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            },
+            async createItem() {
+                try {
+                    const response = await fetch(`http://localhost:3000/{{tableName}}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(this.newItem),
+                    });
+                    if (response.ok) {
+                        this.fetchData();
+                        this.newItem = {};
+                    } else {
+                        console.error("Error creating item:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Error creating item:", error);
+                }
+            },
+            async editItem(item) {
+                this.editItemData = { ...item };
+                // Aquí puedes implementar un formulario de edición
+            },
+            async updateItem() {
+                try {
+                    const response = await fetch(
+                        `http://localhost:3000/{{tableName}}/${this.editItemData.id}`,
+                        {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(this.editItemData),
+                        }
+                    );
+                    if (response.ok) {
+                        this.fetchData();
+                        this.editItemData = {};
+                    } else {
+                        console.error("Error updating item:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Error updating item:", error);
+                }
+            },
+            async deleteItem(id) {
+                try {
+                    const response = await fetch(`http://localhost:3000/{{tableName}}/${id}`, {
+                        method: "DELETE",
+                    });
+                    if (response.ok) {
+                        this.fetchData();
+                    } else {
+                        console.error("Error deleting item:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Error deleting item:", error);
+                }
+            },
+        },
+    };
+</script>
