@@ -1,47 +1,37 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  <div>
+    <h1>Crear Tabla</h1>
+    <input v-model="tableName" placeholder="Nombre de la tabla" />
+    <textarea v-model="columns" placeholder="Columnas (ej: id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(255))"></textarea>
+    <button @click="createTable">Crear Tabla</button>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+<script>
+export default {
+  data() {
+    return {
+      tableName: "",
+      columns: "",
+    };
+  },
+  methods: {
+    async createTable() {
+      try {
+        const response = await fetch("http://localhost:3000/tables/create-table-plop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tableName: this.tableName, columns: this.columns }),
+        });
+        if (response.ok) {
+          alert("Tabla creada exitosamente");
+        } else {
+          alert("Error al crear la tabla");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    },
+  },
+};
+</script>

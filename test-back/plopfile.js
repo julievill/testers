@@ -1,4 +1,4 @@
-module.exports = function (plop) {
+export default function (plop) {
     plop.setGenerator("create-mysql-table", {
         description: "Genera código SQL para crear una tabla MySQL",
         prompts: [

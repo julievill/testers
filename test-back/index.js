@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import mysql from "mysql2"; // Importa mysql2
+import mysql from "mysql2";
+import tablesRoutes from "./routes/tables.js";
 
 dotenv.config();
 
@@ -32,31 +33,11 @@ app.get("/", (req, res) => {
     res.send("Hello World!");
 });
 
-// Ejemplo de una ruta que usa la base de datos
-app.get("/usuarios", (req, res) => {
-    db.query("SELECT * FROM usuarios", (err, results) => {
-        if (err) {
-            console.error("Error al ejecutar la consulta:", err);
-            res.status(500).json({ error: "Error al obtener usuarios" });
-            return;
-        }
-        res.json(results);
-    });
-});
-
-app.post("/execute-sql", (req, res) => {
-    const { sql } = req.body;
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Error al ejecutar SQL:", err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(results);
-    });
-});
+// Usa las rutas para la creación de tablas
+app.use("/tables", tablesRoutes); // Usa las rutas definidas en tables.js
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
-export { db }; 
+export { db }; // Exporta la conexión para usarla en otros archivos (si es necesario)
