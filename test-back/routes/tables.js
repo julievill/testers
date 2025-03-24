@@ -1,46 +1,45 @@
+import { db } from "../index.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import { exec } from "child_process";
 import express from "express";
-import * as plopModule from "plop"; // Importa el módulo completo
-import { db } from "../index.js"; // Importa la conexión a la base de datos
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const router = express.Router();
 
 router.post("/create-table-plop", async (req, res) => {
     const { tableName, columns } = req.body;
 
-    // Ejecuta Plop.js programáticamente
-    const plop = plopModule.default; // Accede al default export
-    const plopInstance = plop(process.cwd() + "/plopfile.js");
-
-    plopInstance.runGenerator("create-mysql-table", {
-        tableName: tableName,
-        columns: columns,
-    }, async (err, results) => {
-        if (err) {
-            console.error("Error al ejecutar Plop:", err);
-            return res.status(500).json({ error: "Error al generar el archivo SQL" });
-        }
-
-        // Lee el archivo SQL generado
-        const fs = require("fs").promises;
-        const sqlFilePath = `database/migrations/${tableName}.sql`;
-
-        try {
-            const sql = await fs.readFile(sqlFilePath, "utf8");
-
-            // Ejecuta el SQL en MySQL
-            db.query(sql, (err, results) => {
-                if (err) {
-                    console.error("Error al ejecutar el SQL:", err);
-                    return res.status(500).json({ error: err.message });
+    try {
+        // Run Plop.js via CLI (more reliable than programmatic API)
+        const plopProcess = exec(
+            `npx plop sql-migration --tableName="${tableName}" --columns="${columns}"`,
+            { cwd: __dirname },
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error("Plop error:", stderr);
+                    return res.status(500).json({ error: "Plop failed" });
                 }
 
-                res.json({ message: "Tabla creada exitosamente" });
-            });
-        } catch (error) {
-            console.error("Error al leer el archivo SQL:", error);
-            return res.status(500).json({ error: "Error al leer el archivo SQL" });
-        }
-    });
+                // Read the generated SQL file
+                const sqlFilePath = path.join(__dirname, "database/migrations", `${tableName}.sql`);
+                const sql = fs.readFileSync(sqlFilePath, "utf8");
+
+                // Execute SQL
+                db.query(sql, (err, result) => {
+                    if (err) {
+                        console.error("MySQL error:", err);
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.json({ message: "Table created!" });
+                });
+            }
+        );
+    } catch (error) {
+        console.error("Server error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 export default router;

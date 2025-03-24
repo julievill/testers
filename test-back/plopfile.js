@@ -1,25 +1,25 @@
+// plopfile.js
 export default function (plop) {
-    plop.setGenerator("create-mysql-table", {
-        description: "Genera código SQL para crear una tabla MySQL",
+    plop.setGenerator("sql-migration", {
+        description: "Generate SQL migration file",
         prompts: [
             {
                 type: "input",
                 name: "tableName",
-                message: "Nombre de la tabla:",
+                message: "Table name:",
             },
             {
                 type: "input",
                 name: "columns",
-                message:
-                    "Columnas (nombre tipo, separados por coma. Ej: id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(255))",
+                message: "Columns (format: 'name:type,name2:type2'):",
             },
         ],
         actions: [
             {
                 type: "add",
                 path: "database/migrations/{{tableName}}.sql",
-                templateFile: "plop-templates/create-table.sql.hbs",
+                templateFile: "templates/table.sql.hbs",
             },
         ],
     });
-};
+}
