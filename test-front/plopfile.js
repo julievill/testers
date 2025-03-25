@@ -1,4 +1,4 @@
-module.exports = function (plop) {
+export default function (plop) {
     plop.setGenerator("create-vue-crud-page", {
         description: "Genera una página CRUD en Vue.js para una tabla específica",
         prompts: [

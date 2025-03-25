@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mysql from "mysql2";
-import tablesRoutes from "./routes/tables.js";
 
 dotenv.config();
 
@@ -33,8 +32,15 @@ app.get("/", (req, res) => {
     res.send("Hello World!");
 });
 
-// Usa las rutas para la creación de tablas
-app.use("/plop", tablesRoutes); // Usa las rutas definidas en tables.js
+app.get("/check-db-connection", (req, res) => {
+    db.ping((err) => {
+        if (err) {
+            console.error("Error al comprobar la conexión con la base de datos:", err);
+            return res.status(500).json({ success: false, message: "Error al conectar con la base de datos" });
+        }
+        res.json({ success: true, message: "Conexión con la base de datos exitosa" });
+    });
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
