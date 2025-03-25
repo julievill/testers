@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 });
 
 // Usa las rutas para la creación de tablas
-app.use("/tables", tablesRoutes); // Usa las rutas definidas en tables.js
+app.use("/plop", tablesRoutes); // Usa las rutas definidas en tables.js
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

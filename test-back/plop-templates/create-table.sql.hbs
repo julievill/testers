@@ -1,6 +1,6 @@
 CREATE TABLE {{tableName}} (
 id INT AUTO_INCREMENT PRIMARY KEY,
 {{#each (split columns ',')}}
-{{this}} VARCHAR(255){{#unless @last}},{{/unless}}
+{{this}} {{#unless @last}},{{/unless}}
 {{/each}}
 );
