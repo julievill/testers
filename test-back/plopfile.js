@@ -1,30 +1,35 @@
-// plopfile.js
-export default function (plop) {
+import Handlebars from "handlebars";
 
-    plop.setHelper("split", function (text, delimiter) {
-        return text.split(delimiter);
+export default function (plop) {
+    // Registrar el helper "split"
+    Handlebars.registerHelper("split", function (input, delimiter) {
+        return input.split(delimiter).join(", ");
     });
 
     plop.setGenerator("sql-migration", {
-        description: "Generate SQL migration file",
-        prompts: [
-            {
-                type: "input",
-                name: "tableName",
-                message: "Table name:",
-            },
-            {
-                type: "input",
-                name: "columns",
-                message: "Columns (format: 'name type, name2 type2'):",
-            },
-        ],
-        actions: [
-            {
-                type: "add",
-                path: "database/migrations/{{tableName}}.sql",
-                templateFile: "plop-templates/create-table.sql.hbs",
-            },
-        ],
+        description: "Genera un archivo SQL para crear una tabla",
+        prompts: [],
+        actions: (data) => {
+            console.log("Datos recibidos en el generador:", data);
+        
+            const { tableName, columns } = data;
+        
+            if (!tableName || !columns) {
+                console.error("Faltan datos requeridos: tableName o columns");
+                throw new Error("Faltan datos requeridos para el generador");
+            }
+        
+            return [
+                {
+                    type: "add",
+                    templateFile: "plop-templates/create-table.sql.hbs",
+                    path: "database/migrations/{{tableName}}.sql",
+                    data: {
+                        tableName,
+                        columns,
+                    },
+                },
+            ];
+        },
     });
 }

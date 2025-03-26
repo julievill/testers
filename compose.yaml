@@ -20,6 +20,7 @@ services:
       - 3000:3000
     volumes:
       - ./test-back:/app
+      - ./test-back/database/migrations:/app/database/migrations
     working_dir: /app
     environment:
       - NODE_ENV=development
@@ -35,6 +36,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    user: "node"
+
 
   test-mysql:
     image: mysql:5.7
