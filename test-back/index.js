@@ -17,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+var insertedId;
 
 // Configura la conexión a MySQL
 const db = mysql.createConnection({
@@ -63,11 +64,28 @@ app.get("/check-db-connection", (req, res) => {
     });
 });
 
+app.get("/last-inserted-id", (req, res) => {
+    const query = `SELECT name, columns FROM newTables WHERE id = ?`;
+
+    db.query(query, [insertedId], (err, results) => {
+        if (err) {
+            console.error("Error al obtener los datos de la tabla newTables:", err);
+            return res.status(500).json({ success: false, message: "Error al obtener los datos de la tabla" });
+        }
+
+        if (results.length > 0) {
+            const { name, columns } = results[0];
+            res.json({ success: true, message: "Datos obtenidos correctamente", data: { name, columns } });
+        } else {
+            res.status(404).json({ success: false, message: "No se encontraron datos para el ID proporcionado" });
+        }
+    });
+});
+
 app.get('/create-table', async (req, res) => {
     console.log("Creating table...");
     const name = "users";
-    const columns = "name VARCHAR(255), email VARCHAR(255)";
-
+    const columns = "name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
     console.log("name:", name);
     console.log("columns:", columns);
 
@@ -76,32 +94,44 @@ app.get('/create-table', async (req, res) => {
     }
 
     try {
-        console.log("Preparing Plop...");
+        console.log("Creating table in database...");
+        const query = `INSERT INTO newTables (name, columns) VALUES (?, ?)`;
 
-        // Usamos Plop.prepare correctamente
-        await new Promise((resolve, reject) => {
-            Plop.prepare({
-                cwd: __dirname,
-                configPath: path.join(__dirname, "plopfile.js"),
-                preload: [],
-                completion: false,
-            }, async (env) => {
-                try {
-                    console.log("Running Plop...");
-                    console.log("Datos enviados a Plop:", { tableName: name, columns: columns });
-                    await Plop.execute(env, run, {
-                        generator: "sql-migration",
-                        data: { tableName: name, columns: columns },
-                    });
-                    resolve();
-                } catch (err) {
-                    console.error("Error al ejecutar Plop:", err);
-                    reject(err);
+        const results = await new Promise((resolve, reject) => {
+            db.query(query, [name, columns], (err, results) => {
+                if (err) {
+                    console.error("Error al insertar datos en la tabla newTables:", err);
+                    return reject(err);
                 }
+                resolve(results);
             });
         });
 
-        // Ajustar la ruta dentro del contenedor
+        const insertedId = results.insertId; // Obtener el ID del registro insertado
+
+        console.log("Preparing Plop...");
+        await new Promise((resolve, reject) => {
+            Plop.prepare(
+                {
+                    cwd: __dirname,
+                    configPath: path.join(__dirname, "plopfile.js"),
+                    preload: [],
+                    completion: false,
+                },
+                async (env) => {
+                    try {
+                        await Plop.execute(env, run, {
+                            generator: "sql-migration",
+                        });
+                        resolve();
+                    } catch (err) {
+                        console.error("Error al ejecutar Plop:", err);
+                        reject(err);
+                    }
+                }
+            );
+        });
+
         const filePath = path.join(__dirname, "database/migrations", `${name}.sql`);
 
         if (!fs.existsSync(filePath)) {
@@ -112,13 +142,12 @@ app.get('/create-table', async (req, res) => {
         console.log("Ejecutando SQL desde:", filePath);
         await executeSQLFile(filePath);
 
-        return res.json({ success: true, message: "Tabla creada correctamente" });
+        return res.json({ success: true, message: "Tabla creada correctamente", data: { id: insertedId } });
     } catch (error) {
         console.error("Error al crear la tabla:", error);
         return res.status(500).json({ success: false, message: "Error al crear la tabla" });
     }
 });
-
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
